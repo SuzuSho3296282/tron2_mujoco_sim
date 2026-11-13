@@ -37,6 +37,10 @@ RAISE_S = 2.0      # start pose -> raised hand
 LOWER_S = 2.0      # raised hand -> start pose (on Ctrl+C)
 WAVE_PERIOD_S = 1.0
 WAVE_AMP = 0.5     # rad, upper-arm yaw swing that sways the forearm left/right
+# DACH's head has only pitch + yaw (no roll), so the head "sways" by swinging yaw
+# left/right around the look-at-hand offset, slower than the hand wave.
+HEAD_PERIOD_S = 2.0
+HEAD_AMP = 0.25    # rad
 
 # Raised-hand pose, as offsets on top of the start pose. Pitch < 0 swings the
 # arm forward, elbow < 0 bends it, roll < 0 moves the right arm outward. The
@@ -47,7 +51,7 @@ RAISED = {
     "proximal_roll_R_Joint": -0.4,
     "elbow_R_Joint": -2.3,
     "head_yaw_Joint": -0.3,      # look toward the right hand
-    "head_pitch_Joint": -0.1,
+    "head_pitch_Joint": -0.3,    # tilt the face up a little
 }
 
 
@@ -78,6 +82,9 @@ def target(q0, raise_amount, wave_t):
         swing = WAVE_AMP * fade * math.sin(2.0 * math.pi * wave_t / WAVE_PERIOD_S)
         q[IDX["proximal_yaw_R_Joint"]] += raise_amount * swing
         q[IDX["wrist_roll_R_Joint"]] += raise_amount * 0.5 * swing   # flick the hand too
+        head_fade = smooth(wave_t / HEAD_PERIOD_S)
+        q[IDX["head_yaw_Joint"]] += raise_amount * HEAD_AMP * head_fade * math.sin(
+            2.0 * math.pi * wave_t / HEAD_PERIOD_S)
     return q
 
 
